@@ -1,72 +1,93 @@
-#include <stdio.h>
-#include <limits.h>
-#include <stdbool.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<sys/types.h>
+#include<sys/resource.h>
+#include<sys/times.h> 
+#include<limits.h>
+#include<stdbool.h>
+#define MAX_V 100
 
-#define MAX_N 100 // Maximum number of cities
+int minDistance(int dist[], bool sptSet[], int V)
+{
+int min = INT_MAX, min_index;
 
-// Function prototypes
-void dijkstra(int graph[MAX_N][MAX_N], int n, int src);
-
-int main() {
-    int n, src;
-    int graph[MAX_N][MAX_N];
-
-    printf("Enter the number of cities (n <= %d): ", MAX_N);
-    scanf("%d", &n);
-
-    // Input the adjacency matrix
-    printf("Enter the adjacency matrix (%d x %d):\n", n, n);
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            scanf("%d", &graph[i][j]);
-
-    printf("Enter the source city (0 to %d): ", n - 1);
-    scanf("%d", &src);
-
-    dijkstra(graph, n, src);
-
-    return 0;
+for (int v = 0; v < V; v++) {
+if (sptSet[v] == false && dist[v] <= min) {
+min = dist[v];
+min_index = v;
+}
 }
 
-// Dijkstra's algorithm to find shortest paths from source to all vertices
-void dijkstra(int graph[MAX_N][MAX_N], int n, int src) {
-    int dist[MAX_N]; // Array to store the shortest distances from src to i
-    bool visited[MAX_N] = {false}; // Array to track visited cities
-
-    // Initialize distances, all set to infinity (INT_MAX)
-    for (int i = 0; i < n; i++) {
-        dist[i] = INT_MAX;
-    }
-
-    dist[src] = 0; // Distance from source to itself is 0
-
-    // Find shortest path for all cities
-    for (int count = 0; count < n - 1; count++) {
-        // Pick the minimum distance city from the set of cities not yet processed
-        int u = -1;
-        for (int i = 0; i < n; i++) {
-            if (!visited[i] && (u == -1 || dist[i] < dist[u]))
-                u = i;
-        }
-
-        // Mark the picked city as visited
-        visited[u] = true;
-
-        // Update dist value of the adjacent cities of the picked city
-        for (int v = 0; v < n; v++) {
-            // Update dist[v] only if it's not visited, there is an edge from u to v,
-            // and the total weight of path from src to v through u is smaller than current value of dist[v]
-            if (!visited[v] && graph[u][v] && dist[u] != INT_MAX && dist[u] + graph[u][v] < dist[v]) {
-                dist[v] = dist[u] + graph[u][v];
-            }
-        }
-    }
-
-    // Print the shortest distances from source city
-    printf("Shortest distances from source city %d:\n", src);
-    printf("City\tDistance\n");
-    for (int i = 0; i < n; i++) {
-        printf("%d\t%d\n", i, dist[i]);
-    }
+return min_index;
 }
 
+void printSolution(int dist[], int V)
+{
+printf("Vertex \t\t Distance from Source\n");
+for (int i = 0; i < V; i++) {
+printf("%d \t\t\t\t %d\n", i, dist[i]);
+}
+}
+
+void dijkstra(int graph[][MAX_V], int src, int V)
+{
+int dist[V];
+bool sptSet[V];
+
+for (int i = 0; i < V; i++) {
+dist[i] = INT_MAX;
+sptSet[i] = false;
+}
+
+dist[src] = 0;
+
+for (int count = 0; count < V - 1; count++) {
+int u = minDistance(dist, sptSet, V);
+
+sptSet[u] = true;
+
+for (int v = 0; v < V; v++) {
+if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX
+&& dist[u] + graph[u][v] < dist[v]) {
+dist[v] = dist[u] + graph[u][v];
+}
+}
+}
+
+printSolution(dist, V);
+}
+
+int main()
+{
+int V;
+int src;
+struct timeval tv1, tv2;
+struct rusage r_usage;
+
+printf("Enter the number of vertices: ");
+scanf("%d", &V);
+
+int graph[MAX_V][MAX_V];
+
+printf("Enter the adjacency matrix (%d x %d):\n", V, V);
+for (int i = 0; i < V; i++) {
+for (int j = 0; j < V; j++) {
+scanf("%d", &graph[i][j]);
+}
+}
+
+printf("Enter the starting node (between 0 and %d): ", V - 1);
+scanf("%d", &src);
+
+gettimeofday(&tv1, NULL);
+dijkstra(graph, src, V);
+gettimeofday(&tv2, NULL);
+
+double time_taken = (double)(tv2.tv_usec - tv1.tv_usec);
+printf("Total time = %f microseconds\n", time_taken);
+
+getrusage(RUSAGE_SELF, &r_usage);
+printf("Memory usage: %ld kilobytes\n", r_usage.ru_maxrss);
+
+return 0;
+}
