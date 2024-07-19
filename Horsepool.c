@@ -1,51 +1,61 @@
-#include <stdio.h>
-#include <string.h>
-#define MAX_ALPHABET_SIZE 256
+#include<stdio.h> 
+#include<stdlib.h>
+#include<sys/resource.h>
+#include<sys/stat.h>
+#include<time.h>
+#define NO_OF_CHARS 256
 
-// Function to create the bad character shift table
-void createShiftTable(char pattern[], int m, int shiftTable[]) {
-    for (int i = 0; i < MAX_ALPHABET_SIZE; i++) {
-        shiftTable[i] = m;
-    }
-    for (int j = 0; j < m - 1; j++) {
-        shiftTable[(int)pattern[j]] = m - 1 - j;
-    }
+int max(int a, int b) { return (a > b) ? a : b; }
+void badCharHeuristic(char* str, int size, int badchar[NO_OF_CHARS]){ 
+    int i;
+    for (i = 0; i < NO_OF_CHARS; i++)
+        badchar[i] = -1;
+    for (i = 0; i < size; i++)
+        badchar[(int)str[i]] = i;
 }
 
-// Function to perform Horsepool's algorithm
-int horsepoolSearch(char text[], char pattern[]) {
-    int n = strlen(text);
-    int m = strlen(pattern);
-    int shiftTable[MAX_ALPHABET_SIZE];
-
-    createShiftTable(pattern, m, shiftTable);
-
-    int i = m - 1;
-    while (i < n) {
-        int k = 0;
-        while (k < m && pattern[m - 1 - k] == text[i - k]) {
-            k++;
+void search(char* txt, char* pat)
+{
+    int m = strlen(pat);
+    int n = strlen(txt);
+    int badchar[NO_OF_CHARS];
+    badCharHeuristic(pat, m, badchar);
+    int s = 0;
+    while (s <= (n - m)) {
+        int j = m - 1;
+        while (j >= 0 && pat[j] == txt[s + j])
+            j--;
+        if (j < 0) {
+            printf("The desired pattern was found starting from position: %d\n", s);
+            s += (s + m < n) ? m - badchar[txt[s + m]] : 1;
         }
-        if (k == m) {
-            return i - m + 1; // Pattern found at index (i - m + 1)
-        } else {
-            i += shiftTable[(int)text[i]];
-        }
+        else
+
+        s += max(1, j - badchar[txt[s + j]]);
     }
-    return -1; // Pattern not found
 }
 
-int main() {
-    char text[] = "ACGTACGTGACG";
-    char pattern[] = "TACG";
 
-    int position = horsepoolSearch(text, pattern);
-    if (position != -1) {
-        printf("Pattern found at index: %d\n", position);
-    } else {
-        printf("Pattern not found.\n");
-    }
+int main()
+{
+char txt[100];
+char pat[100];
+printf("Enter the text in which pattern need to be searched:\n");
+scanf("%s", txt);
+printf("Enter the pattern need to be searched:\n");
+scanf("%s", pat);
 
-    return 0;
+printf("Length of text is %ld\n", strlen(txt));
+printf("Length of pattern is %ld\n", strlen(pat));
+
+struct timeval start_time,end_time;
+gettimeofday(&start_time,NULL);
+search(txt, pat);
+gettimeofday(&end_time,NULL);
+
+printf("Time for Harspool's algrithm is: %fmicroseconds\n",(double)end_time.tv_usec - (double)start_time.tv_usec);
+struct rusage r_usage;
+getrusage(RUSAGE_SELF,&r_usage);
+printf("Memory usage: %ld Kilobytes\n", r_usage.ru_maxrss);
+return 0;
 }
-
