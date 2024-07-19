@@ -1,62 +1,73 @@
-#include <stdio.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<sys/types.h>
+#include<sys/resource.h>
+#include<time.h>
+#define MAX 100
 
-#define MAX_N 100 // Maximum number of systems
-
-// Function prototypes
-void warshall(int graph[MAX_N][MAX_N], int n);
-
-int main() {
-    int n;
-    int graph[MAX_N][MAX_N];
-
-    printf("Enter the number of systems (n <= %d): ", MAX_N);
-    scanf("%d", &n);
-
-    // Input the adjacency matrix
-    printf("Enter the adjacency matrix (%d x %d):\n", n, n);
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            scanf("%d", &graph[i][j]);
-
-    warshall(graph, n);
-
-    return 0;
+void printMatrix(int matrix[MAX][MAX], int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+             printf("%d ", matrix[i][j]);
+    }
+    printf("\n");
+    }
 }
 
-// Function to find transitive closure using Warshall's algorithm
-void warshall(int graph[MAX_N][MAX_N], int n) {
-    int reach[MAX_N][MAX_N]; // Result matrix where reach[i][j] will be true if there is a path from i to j
-
-    // Initialize reach[][]
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+void warshallAlgorithm(int graph[MAX][MAX], int n) {
+    int reach[MAX][MAX];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
             reach[i][j] = graph[i][j];
-
-    // Compute transitive closure
+        }
+    }
     for (int k = 0; k < n; k++) {
-        // Pick all vertices as source one by one
         for (int i = 0; i < n; i++) {
-            // Pick all vertices as destination for the above picked source
             for (int j = 0; j < n; j++) {
-                // If vertex k is on a path from i to j, then mark reach[i][j] as true
-                if (reach[i][k] && reach[k][j])
-                    reach[i][j] = 1;
+                reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j]);
             }
         }
     }
-
-    // Print the transitive closure
-    printf("Transitive closure (reachability matrix):\n");
-    printf("   ");
-    for (int i = 0; i < n; i++)
-        printf("%3d ", i);
-    printf("\n");
-    for (int i = 0; i < n; i++) {
-        printf("%3d", i);
-        for (int j = 0; j < n; j++) {
-            printf("%3d ", reach[i][j]);
-        }
-        printf("\n");
-    }
+    printf("Transitive closure of the given graph:\n");
+    printMatrix(reach, n);
 }
 
+    long getCurrentTime() {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return time.tv_sec * 1000000 + time.tv_usec;
+    }
+
+    long getMemoryUsage() {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    return usage.ru_maxrss;
+}
+
+int main() {
+    int n;
+    int graph[MAX][MAX];
+
+    printf("Enter the number of nodes: ");
+    scanf("%d", &n);
+
+    printf("Enter the adjacency matrix:\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &graph[i][j]);
+        }
+    }
+
+    long startTime = getCurrentTime();
+    long startMemory = getMemoryUsage();
+
+    warshallAlgorithm(graph, n);
+
+    long endTime = getCurrentTime();
+    long endMemory = getMemoryUsage();
+
+    printf("Execution time: %ld microseconds\n", (endTime - startTime));
+    printf("Memory usage: %ld kilobytes\n", (endMemory - startMemory));
+
+    return 0;
+}
