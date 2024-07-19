@@ -1,75 +1,78 @@
-#include<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/resource.h>
+#include <time.h>
+#include <sys/types.h>
 
+// Function prototypes
+int position(int arr[], int lb, int ub);
+int quicksort(int arr[], int lb, int ub);
 
-void swap(int* a, int* b)
-{
-int temp = *a;
-*a = *b;
-*b = temp;
+int main() {
+    int n;
+    int lb = 0;
+    struct timeval tv1, tv2;
+    struct rusage r_usage;
+
+    printf("Enter the number of elements in an array: ");
+    scanf("%d", &n);
+
+    int *arr = (int *)malloc(n * sizeof(int)); // Allocate memory for the array
+
+    printf("Enter the elements:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &arr[i]);
+    }
+
+    gettimeofday(&tv1, NULL);
+    quicksort(arr, lb, n - 1);
+    gettimeofday(&tv2, NULL);
+
+    printf("Sorted array:\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\n", arr[i]);
+    }
+
+    printf("Time of quicksort = %f microseconds\n", (double)(tv2.tv_usec - tv1.tv_usec));
+    getrusage(RUSAGE_SELF, &r_usage);
+    printf("Memory: %ld kilobytes\n", r_usage.ru_maxrss);
+
+    free(arr); // Free dynamically allocated memory
+
+    return 0;
 }
 
-int partition(int arr[], int low, int high)
-{
+int position(int arr[], int lb, int ub) {
+    int pivot = arr[lb];
+    int start = lb;
+    int end = ub;
+    int temp;
 
-
-int pivot = arr[low];
-int i = low;
-int j = high;
-
-while (i < j) {
-
-
-while (arr[i] <= pivot && i <= high - 1) {
-i++;
+    while (start < end) {
+        while (arr[start] <= pivot) {
+            start++;
+        }
+        while (arr[end] > pivot) {
+            end--;
+        }
+        if (start < end) {
+            temp = arr[start];
+            arr[start] = arr[end];
+            arr[end] = temp;
+        }
+    }
+    temp = arr[lb];
+    arr[lb] = arr[end];
+    arr[end] = temp;
+    return end;
 }
 
-
-while (arr[j] > pivot && j >= low + 1) {
-j--;
+int quicksort(int arr[], int lb, int ub) {
+    int loc;
+    if (lb < ub) {
+        loc = position(arr, lb, ub);
+        quicksort(arr, lb, loc - 1);
+        quicksort(arr, loc + 1, ub);
+    }
+    return 0;
 }
-if (i < j) {
-swap(&arr[i], &arr[j]);
-}
-}
-swap(&arr[low], &arr[j]);
-return j;
-}
-
-
-void quickSort(int arr[], int low, int high)
-{
-if (low < high) {
-
-
-int partitionIndex = partition(arr, low, high);
-
-
-quickSort(arr, low, partitionIndex - 1);
-quickSort(arr, partitionIndex + 1, high);
-}
-}
-
-
-int main()
-{
-int arr[] = { 19, 17, 15, 12, 16, 18, 4, 11, 13 };
-int n = sizeof(arr) / sizeof(arr[0]);
-
-
-printf("Original array: ");
-for (int i = 0; i < n; i++) {
-printf("%d ", arr[i]);
-}
-
-
-quickSort(arr, 0, n - 1);
-
-
-printf("\nSorted array: ");
-for (int i = 0; i < n; i++) {
-printf("%d ", arr[i]);
-}
-
-return 0;
-}
-
